@@ -20,14 +20,14 @@ OK, so let's get just the state House races.
 ```{r}
 NCHouse2018 <- results2018 %>%
         filter(
-                str_detect(`Contest Name`,"NC HOUSE OF REPRESENTATIVES*")
+                str_detect(contest_name,"NC HOUSE OF REPRESENTATIVES*")
                 ) %>%
-         group_by(`Contest Name`, Choice, `Choice Party`) %>%
-        summarize(Votes=sum(`Total Votes`))
+         group_by(contest_name, choice, choice_party) %>%
+        summarize(Votes=sum(total_votes))
 ```
 
 ```{r}
-ggplot( NCHouse2018 ) + geom_col( mapping = aes(x=Choice, y=Votes) )
+ggplot( NCHouse2018 ) + geom_col( mapping = aes(x=choice, y=Votes) )
 ```
 
 
@@ -43,27 +43,27 @@ What is "geom_col" ?
 Anyway, that chart is pretty useless. Let's just look at one contest.
 ```{r}
 NCHouse2018 %>% 
-        filter(`Contest Name` == "NC HOUSE OF REPRESENTATIVES DISTRICT 003") %>%
+        filter(contest_name == "NC HOUSE OF REPRESENTATIVES DISTRICT 003") %>%
         ggplot() + #we don't need to use the dataframe as the argument here beacuse we are piping it in from the first line in this R statement
-        geom_col( mapping = aes(x=Choice, y=Votes) )
+        geom_col( mapping = aes(x=choice, y=Votes) )
 ```
 
 But if you want to put it in order, you need to use the reorder() function in the value you assign to the x-axis.
 
 ```{r}
 NCHouse2018 %>% 
-        filter(`Contest Name` == "NC HOUSE OF REPRESENTATIVES DISTRICT 003") %>%
+        filter(contest_name == "NC HOUSE OF REPRESENTATIVES DISTRICT 003") %>%
         ggplot() + #we don't need to use the dataframe as the argument here beacuse we are piping it from the first line in this R statement
-        geom_col( mapping = aes(x=reorder(Choice, Votes), y=Votes) )
+        geom_col( mapping = aes(x=reorder(choice, Votes), y=Votes) )
 ```
 
 Least to most probably makes more sense to folks. So put a minus sign before the field you want to order by.
 
 ```{r}
 NCHouse2018 %>% 
-        filter(`Contest Name` == "NC HOUSE OF REPRESENTATIVES DISTRICT 003") %>%
+        filter(contest_name == "NC HOUSE OF REPRESENTATIVES DISTRICT 003") %>%
         ggplot() + #we don't need to use the dataframe as the argument here beacuse we are piping it in from the first line in the R statement
-        geom_col( mapping = aes(x=reorder(Choice, -Votes), y=Votes) )
+        geom_col( mapping = aes(x=reorder(choice, -Votes), y=Votes) )
 ```
 
 
@@ -73,11 +73,11 @@ Did one party have a lot more candidates running? (For example, in unopposed rac
 
 To graph the number of candidates from each party we can switch from the geom_col() function to the geom_bar().
 
-The geom_bar() function by default does a count of the number of rows in each category for whatever field you select. So let's look at the party of each candidate, which in this dataset is the column called `"Choice Party".
+The geom_bar() function by default does a count of the number of rows in each category for whatever field you select. So let's look at the party of each candidate, which in this dataset is the column called `"choice Party".
 
 ```{r}
 ggplot(data = NCHouse2018) +
-        geom_bar(mapping = aes(x=`Choice Party`))
+        geom_bar(mapping = aes(x=choice_party))
 ```
 
 OK, but what if you want to just focus on that relatively small difference between Democratic and Republican candidates? We can filter the data right here inside ggplot.
@@ -86,14 +86,14 @@ OK, but what if you want to just focus on that relatively small difference betwe
 ggplot(
         data = 
                 filter(NCHouse2018,
-                       `Choice Party` %in% # we are using %in% because we are looking for more than one value in the same column.
+                       choice_party %in% # we are using %in% because we are looking for more than one value in the same column.
                                c("DEM", "REP")
                        )
         ) +
         geom_bar(
                 mapping = 
                         aes(
-                                x=`Choice Party`
+                                x=choice_party
                                 )
                 )
 ```
@@ -110,14 +110,14 @@ You can explicitly turn the y axis of a bar chart into proportions using "y=..pr
 ggplot(
         data = 
                 filter(NCHouse2018,
-                       `Choice Party` %in%
+                       choice_party %in%
                                c("DEM", "REP")
                        )
         ) +
         geom_bar(
                 mapping = 
                         aes(
-                                x=`Choice Party`,
+                                x=choice_party,
                                 y= ..prop.., #this is the new line
                                 group = 1 #so is this
                                 )
@@ -132,27 +132,27 @@ Remember this?
 
 ```{r}
 #NCHouse2018 %>% 
-#        filter(`Contest Name` == "NC HOUSE OF REPRESENTATIVES DISTRICT 003") %>%
+#        filter(contest_name == "NC HOUSE OF REPRESENTATIVES DISTRICT 003") %>%
 #        ggplot() + 
-#        geom_col( mapping = aes(x=Choice, y=Votes) )
+#        geom_col( mapping = aes(x=choice, y=Votes) )
 ```
 
 What if we changed it to geom_bar() ?(... and dropped the y argument...)
 
 ```{r}
 NCHouse2018 %>% 
-        filter(`Contest Name` == "NC HOUSE OF REPRESENTATIVES DISTRICT 003") %>%
+        filter(contest_name == "NC HOUSE OF REPRESENTATIVES DISTRICT 003") %>%
         ggplot() + 
-        geom_bar( mapping = aes(x=Choice) )
+        geom_bar( mapping = aes(x=choice) )
 ```
 
 Well this is dumb. Just a histogram that tells us we have one value for each of our candidates. We need to "weight" it... which means (in this case anyway) tell R the column you want to use as values.
 
 ```{r}
 NCHouse2018 %>%
-        filter(`Contest Name` == "NC HOUSE OF REPRESENTATIVES DISTRICT 003") %>%
+        filter(contest_name == "NC HOUSE OF REPRESENTATIVES DISTRICT 003") %>%
         ggplot() + 
-        geom_bar( mapping = aes(x=Choice, weight=Votes))
+        geom_bar( mapping = aes(x=choice, weight=Votes))
 ```
 
 
@@ -169,22 +169,22 @@ Basically, use geom_bar when you want to chart the count of the number of rows i
 Let's color by party... 
 ```{r}
 NCHouse2018 %>% 
-        filter(`Contest Name` == "NC HOUSE OF REPRESENTATIVES DISTRICT 003") %>%
+        filter(contest_name == "NC HOUSE OF REPRESENTATIVES DISTRICT 003") %>%
         ggplot() + 
-        geom_bar( mapping = aes(x=Choice, 
+        geom_bar( mapping = aes(x=choice, 
                                 weight=Votes,
-                                fill=`Choice Party`)) #this is the new stuff
+                                fill=choice_party)) #this is the new stuff
 ```
 
 R has default colors it will use, but you can also force it to use certain colors. Here is just one of *many* ways you can do that.
 
 ```{r}
 NCHouse2018 %>% 
-filter(`Contest Name` == "NC HOUSE OF REPRESENTATIVES DISTRICT 003") %>% 
+filter(contest_name == "NC HOUSE OF REPRESENTATIVES DISTRICT 003") %>% 
 ggplot() + 
-        geom_bar( mapping = aes(x=Choice, 
+        geom_bar( mapping = aes(x=choice, 
                                 weight=Votes,
-                                fill=`Choice Party`)) +
+                                fill=choice_party)) +
         scale_fill_manual(values=c("red", "blue", "black")) #In this case, the function goes outside and after the geom_bar() function.
 ```
 
@@ -192,22 +192,22 @@ Not quite. I guess the colors have to be in the same order as the legend (which 
 
 ```{r}
 NCHouse2018 %>% 
-filter(`Contest Name` == "NC HOUSE OF REPRESENTATIVES DISTRICT 003") %>% 
+filter(contest_name == "NC HOUSE OF REPRESENTATIVES DISTRICT 003") %>% 
 ggplot() + 
-        geom_bar( mapping = aes(x=Choice, 
+        geom_bar( mapping = aes(x=choice, 
                                 weight=Votes,
-                                fill=`Choice Party`)) +
+                                fill=choice_party)) +
         scale_fill_manual(values=c("blue", "black", "red")) #this is the new line
 ```
 
 Let's make it pretty order... 
 ```{r}
 NCHouse2018 %>% 
-filter(`Contest Name` == "NC HOUSE OF REPRESENTATIVES DISTRICT 003") %>% 
+filter(contest_name == "NC HOUSE OF REPRESENTATIVES DISTRICT 003") %>% 
 ggplot() + 
-        geom_bar( mapping = aes(x=reorder(Choice, -Votes), #change this line
+        geom_bar( mapping = aes(x=reorder(choice, -Votes), #change this line
                                 weight=Votes,
-                                fill=`Choice Party`)) +
+                                fill=choice_party)) +
         scale_fill_manual(values=c("blue", "black", "red")) 
 ```
 
@@ -215,11 +215,11 @@ How many key strokes would it take you to make a chart like this for all 120 sta
 
 ```{r}
 NCHouse2018 %>% 
-filter(`Contest Name` == "NC HOUSE OF REPRESENTATIVES DISTRICT 120") %>% 
+filter(contest_name == "NC HOUSE OF REPRESENTATIVES DISTRICT 120") %>% 
 ggplot() + 
-        geom_bar( mapping = aes(x=reorder(Choice, -Votes),
+        geom_bar( mapping = aes(x=reorder(choice, -Votes),
                                 weight=Votes,
-                                fill=`Choice Party`)) +
+                                fill=choice_party)) +
         scale_fill_manual(values=c("blue", "red")) 
 ```
 
@@ -229,13 +229,13 @@ Let's look at Appeals Court seats to demonstrate stacked bars...
 
 ```{r}
 results2018 %>% 
-        filter(str_detect(`Contest Name`,"NC COURT OF APPEALS JUDGE SEAT*")) %>%
-        group_by(`Contest Name`, Choice, `Choice Party`) %>%
-        summarize(Votes=sum(`Total Votes`)) %>%
+        filter(str_detect(contest_name,"NC COURT OF APPEALS JUDGE SEAT")) %>%
+        group_by(contest_name, choice, choice_party) %>%
+        summarize(Votes=sum(total_votes)) %>%
         ggplot() + 
-        geom_col( mapping = aes(x=`Contest Name`, 
+        geom_col( mapping = aes(x=contest_name, 
                                 y=Votes,
-                                fill=`Choice Party`) 
+                                fill=choice_party) #instead of explictly setting colors, we can use another column (this time "choice Party") to determine the colors.
                   )
 ```
 
@@ -245,13 +245,13 @@ If you want them side-by-side instead of stacked then you just add position = "d
 
 ```{r}
 results2018 %>% 
-        filter(str_detect(`Contest Name`,"NC COURT OF APPEALS JUDGE SEAT*")) %>%
-        group_by(`Contest Name`, Choice, `Choice Party`) %>%
-        summarize(Votes=sum(`Total Votes`)) %>%
+        filter(str_detect(contest_name,"NC COURT OF APPEALS JUDGE SEAT*")) %>%
+        group_by(contest_name, choice, choice_party) %>%
+        summarize(Votes=sum(total_votes)) %>%
         ggplot() + 
-        geom_col( mapping = aes(x=`Contest Name`, 
+        geom_col( mapping = aes(x=contest_name, 
                                 y=Votes,
-                                fill=`Choice Party`
+                                fill=choice_party
                                 ),
                   position = "dodge"
                   )
@@ -260,132 +260,155 @@ results2018 %>%
 We will come back and make this prettier later, but for now we are going to move on to scatterplots. (and,really, to illustrate some more aesthetic settings that aren't relevant to bar charts).
 
 
+Remember the very first bar chart we made?
+
 ```{r}
-ggplot( NCHouse2018 ) + geom_point( mapping = aes(x=Choice, y=Votes) )
+#ggplot( NCHouse2018 ) + geom_col( mapping = aes(x=choice, y=Votes) )
 ```
 
-Color by party...
+What do you think is the one small change we would need to make to turn it in to a scatterplot?
+
+
+```{r}
+ggplot( NCHouse2018 ) + geom_point( mapping = aes(x=choice, y=Votes) )
+```
+
+That's a pretty dumb scatterplot.
+
+I wonder if we can make it less dumb if we add color.
 
 ```{r}
 ggplot( NCHouse2018 ) +
         geom_point( 
                 mapping = 
-                        aes(x=Choice,
+                        aes(x=choice,
                             y=Votes,
-                            color=`Choice Party`
+                            color=choice_party #set the color of the points to the values in the choice Party column
                             )
                 )
 ```
 
 Look at that, 9 of the 10 candidates with the most votes were all Democrats. Sup with that?
 
-Anyway...
+Anyway, we're going to start making some ugly graphics in order to just demonstrate some levers you can play with. This time we will set the size of the points to the values in the ElectionDayPct column (which we will create -- temporarily -- with good ol' group_by and summarize).
 
 ```{r}
 results2018 %>% 
-        filter(str_detect(`Contest Name`,"NC HOUSE OF REPRESENTATIVES*")) %>%
-        group_by(`Contest Name`, Choice, `Choice Party`) %>%
-        summarize(TotalVotes=sum(`Total Votes`), 
-                  ElectionDayPCT = sum(`Election Day`)/sum(`Total Votes`),
-                  NotElectionDayPCT = (sum(`Total Votes`) - sum(`Election Day`)) / sum(`Total Votes`) ) %>%
+        filter(str_detect(contest_name,"NC HOUSE OF REPRESENTATIVES*")) %>%
+        group_by(contest_name, choice, choice_party) %>%
+        summarize(TotalVotes=sum(total_votes), 
+                  ElectionDayPCT = sum(election_day)/sum(total_votes),
+                  NotElectionDayPCT = (sum(total_votes) - sum(election_day)) / sum(total_votes) ) %>%
 ggplot() +
         geom_point( 
                 mapping = 
-                        aes(x=Choice,
+                        aes(x=choice,
                             y=TotalVotes,
-                            color=`Choice Party`,
-                            size = ElectionDayPCT
+                            color=choice_party,
+                            size = ElectionDayPCT # here is the line that controls the size of the dots
                             )
                 )
 ```
 
+... And we can change the transparency of the points by using the "alpha" argument and letting its value be controled by a column that has numerical values. In this case, the "TotalVotes" column.
 
 ```{r}
 results2018 %>% 
-        filter(str_detect(`Contest Name`,"NC HOUSE OF REPRESENTATIVES*")) %>%
-        group_by(`Contest Name`, Choice, `Choice Party`) %>%
-        summarize(TotalVotes=sum(`Total Votes`), 
-                  ElectionDayPCT = sum(`Election Day`)/sum(`Total Votes`),
-                  NotElectionDayPCT = (sum(`Total Votes`) - sum(`Election Day`)) / sum(`Total Votes`) ) %>%
+        filter(str_detect(contest_name,"NC HOUSE OF REPRESENTATIVES*")) %>%
+        group_by(contest_name, choice, choice_party) %>%
+        summarize(TotalVotes=sum(total_votes), 
+                  ElectionDayPCT = sum(election_day)/sum(total_votes),
+                  NotElectionDayPCT = (sum(total_votes) - sum(election_day)) / sum(total_votes) ) %>%
 ggplot() +
         geom_point( 
                 mapping = 
-                        aes(x=Choice,
+                        aes(x=choice,
                             y=TotalVotes,
-                            color=`Choice Party`,
+                            color=choice_party,
                             size = ElectionDayPCT,
                             alpha = TotalVotes
                             )
                 )
 ```
 
+We can use a column with categorical values to set the shape of the points... 
+
 ```{r}
 results2018 %>% 
-        filter(str_detect(`Contest Name`,"NC HOUSE OF REPRESENTATIVES*") ) %>%
-        group_by(`Contest Name`, Choice, `Choice Party`) %>%
-        summarize(TotalVotes=sum(`Total Votes`), 
-                  ElectionDayPCT = sum(`Election Day`)/sum(`Total Votes`),
-                  NotElectionDayPCT = (sum(`Total Votes`) - sum(`Election Day`)) / sum(`Total Votes`) ) %>%
+        filter(str_detect(contest_name,"NC HOUSE OF REPRESENTATIVES") ) %>%
+        group_by(contest_name, choice, choice_party) %>%
+        summarize(TotalVotes=sum(total_votes), 
+                  ElectionDayPCT = sum(election_day)/sum(total_votes),
+                  NotElectionDayPCT = (sum(total_votes) - sum(election_day)) / sum(total_votes) ) %>%
 ggplot() +
         geom_point( 
                 mapping = 
-                        aes(x=Choice,
+                        aes(x=choice,
                             y=TotalVotes,
-                            color=`Choice Party`,
+                            color=choice_party,
                             size = ElectionDayPCT,
-                            shape = `Contest Name`
+                            shape = contest_name #new line is here.
                             )
                 )
 ```
 
+Aha. That's a useful warning. Probably just generally a good idea to realize that visualizing more than a few categories at a time becomes pretty useless. 
+We can get rid of the legend to make it more readable... 
 
 ```{r}
 results2018 %>% 
-        filter(str_detect(`Contest Name`,"NC HOUSE OF REPRESENTATIVES*") ) %>%
-        group_by(`Contest Name`, Choice, `Choice Party`) %>%
-        summarize(TotalVotes=sum(`Total Votes`), 
-                  ElectionDayPCT = sum(`Election Day`)/sum(`Total Votes`),
-                  NotElectionDayPCT = (sum(`Total Votes`) - sum(`Election Day`)) / sum(`Total Votes`) ) %>%
+        filter(str_detect(contest_name,"NC HOUSE OF REPRESENTATIVES*") ) %>%
+        group_by(contest_name, choice, choice_party) %>%
+        summarize(TotalVotes=sum(total_votes), 
+                  ElectionDayPCT = sum(election_day)/sum(total_votes),
+                  NotElectionDayPCT = (sum(total_votes) - sum(election_day)) / sum(total_votes) ) %>%
 ggplot() +
         geom_point( 
                 mapping = 
-                        aes(x=Choice,
+                        aes(x=choice,
                             y=TotalVotes,
-                            color=`Choice Party`,
+                            color=choice_party,
                             size = ElectionDayPCT,
-                            shape = `Contest Name`
+                            shape = contest_name
                             ),
-                show.legend=FALSE)
+                show.legend=FALSE) # use this argument, outside of aes() but inside geom_point in this case, to not display any legend.
                 
 ```
 
 Oh yeah, you can make all KINDS of ugly visualizations.
 
 
-For now, let's switch things up and try to see if we can make a graph that shows all votes for Republican House candidates vs. all votes for Democratic House candidates.
+For now, let's switch things up and try to see if we can make a graph that shows all votes for Republican House candidates vs. all votes for Democratic House candidates. You try ... 
+
+```{r}
+
+```
+
+#Here is where Oct. 23 is likely to end.
+
+
+# We will probably begin Oct. 28 here. 
+
 
 We can fix our y axis labels. But we have to install the "scales" library first. Scales is just a package that helps make numbers pretty. https://www.tidyverse.org/articles/2018/08/scales-1-0-0/
+
+One of the things we can do is put commas into the numbers. (We can also do "$" and "%" but you can do that later by checking out the link above.)
 
 
 ```{r}
 
 library(scales)
-
-
-results2018 %>% 
-        filter(str_detect(`Contest Name`,"NC HOUSE OF REPRESENTATIVES*")) %>%
-        mutate(Party = `Choice Party`) %>%
-        group_by(Party) %>%
-        summarize(TotalVotes=sum(`Total Votes`))
-        
 ```
+
+
+Here is our visualization without pretty axis labels... 
 
 ```{r}
 results2018 %>% 
-        filter(str_detect(`Contest Name`,"NC HOUSE OF REPRESENTATIVES*")) %>%
-        mutate(Party = `Choice Party`) %>%
+        filter(str_detect(contest_name,"NC HOUSE OF REPRESENTATIVES*")) %>%
+        mutate(Party = choice_party) %>%
         group_by(Party) %>%
-        summarize(TotalVotes=sum(`Total Votes`)) %>%
+        summarize(TotalVotes=sum(total_votes)) %>%
         ggplot(
                 aes(x=reorder(Party, -TotalVotes),
                     y=TotalVotes)
@@ -395,12 +418,14 @@ results2018 %>%
 
 ```
 
+... And this just adds commas to the numbers on the y axis....
+
 ```{r}
 results2018 %>% 
-        filter(str_detect(`Contest Name`,"NC HOUSE OF REPRESENTATIVES*")) %>%
-        mutate(Party = `Choice Party`) %>%
+        filter(str_detect(contest_name,"NC HOUSE OF REPRESENTATIVES*")) %>%
+        mutate(Party = choice_party) %>%
         group_by(Party) %>%
-        summarize(TotalVotes=sum(`Total Votes`)) %>%
+        summarize(TotalVotes=sum(total_votes)) %>%
         ggplot(
                 aes(x=reorder(Party, -TotalVotes),
                     y=TotalVotes)
@@ -411,14 +436,16 @@ results2018 %>%
 
 ```
 
-Ooooh. Commas. You fancy.
+Let's make the labels pretty.
+
+Here we will use the labs() function and three arguments to set the text for the "title" of the chart as welll as the labels for the x and y axes.
 
 ```{r}
 results2018 %>% 
-        filter(str_detect(`Contest Name`,"NC HOUSE OF REPRESENTATIVES*")) %>%
-        mutate(Party = `Choice Party`) %>%
+        filter(str_detect(contest_name,"NC HOUSE OF REPRESENTATIVES*")) %>%
+        mutate(Party = choice_party) %>%
         group_by(Party) %>%
-        summarize(TotalVotes=sum(`Total Votes`)) %>%
+        summarize(TotalVotes=sum(total_votes)) %>%
         ggplot(
                 aes(x=reorder(Party, -TotalVotes),
                     y=TotalVotes)
@@ -433,13 +460,16 @@ results2018 %>%
 
 ```
 
-Let's do some cool themes. Some are built in... 
+ggplot() does allow you to fine tune a lot of elements of the chart, but not without some hassle. So folks have created "themes" that allow you to quickly make some common changes to the graphic.
+
+Let's do some cool themes. Some -- like "theme_light()" are built in... 
+
 ```{r}
 results2018 %>% 
-        filter(str_detect(`Contest Name`,"NC HOUSE OF REPRESENTATIVES*")) %>%
-        mutate(Party = `Choice Party`) %>%
+        filter(str_detect(contest_name,"NC HOUSE OF REPRESENTATIVES*")) %>%
+        mutate(Party = choice_party) %>%
         group_by(Party) %>%
-        summarize(TotalVotes=sum(`Total Votes`)) %>%
+        summarize(TotalVotes=sum(total_votes)) %>%
         ggplot(
                 aes(x=reorder(Party, -TotalVotes),
                     y=TotalVotes)
@@ -473,10 +503,10 @@ library("ggthemes")
 
 ```{r}
 results2018 %>% 
-        filter(str_detect(`Contest Name`,"NC HOUSE OF REPRESENTATIVES*")) %>%
-        mutate(Party = `Choice Party`) %>%
+        filter(str_detect(contest_name,"NC HOUSE OF REPRESENTATIVES*")) %>%
+        mutate(Party = choice_party) %>%
         group_by(Party) %>%
-        summarize(TotalVotes=sum(`Total Votes`)) %>%
+        summarize(TotalVotes=sum(total_votes)) %>%
         ggplot(
                 aes(x=reorder(Party, -TotalVotes),
                     y=TotalVotes,
@@ -495,24 +525,65 @@ results2018 %>%
 ```
 
 
+The ggthemes package also includes a function that allows you to fill your columns with the colors used by FiveThirtyEight (but only three colors...)
 
-
-ARGGHGHGHG! Why won't colors work!?!?!?!
 ```{r}
 results2018 %>% 
-        filter(str_detect(`Contest Name`,"NC HOUSE OF REPRESENTATIVES*")) %>%
-        mutate(Party = `Choice Party`) %>%
+        filter(str_detect(contest_name,"NC HOUSE OF REPRESENTATIVES*")) %>%
+        mutate(Party = choice_party) %>%
         group_by(Party) %>%
-        summarize(TotalVotes=sum(`Total Votes`)) %>%
-        ggplot(
-                aes(x=reorder(Party, -TotalVotes),
-                    weight=TotalVotes,
-                    )
+        summarize(TotalVotes=sum(total_votes)) %>%
+        ggplot()+
+                geom_bar(
+                  mapping = 
+                    aes(
+                      x=reorder(Party, -TotalVotes),
+                      weight=TotalVotes,
+                      fill=Party)) +
+                  scale_y_continuous(labels=comma) +
+        labs( 
+                title="Total Votes Cast By Party, N.C. House Races 2018",
+                x="Party",
+                y="Votes for all candidates"
                 ) +
-                geom_bar() +
-               scale_fill_manual(values=c("red", "blue", "black","green","orange","white","yellow"))
+
+        theme_fivethirtyeight() +
+        scale_fill_fivethirtyeight(7) #this is a separate function from theme_fivethirtyeight()
+
+
+
 
 
 ```
 
+This does tell a less precise story, but you can combine the minor party candidates into one group called "Other"
 
+```{r}
+results2018 %>% 
+        filter(str_detect(contest_name,"NC HOUSE OF REPRESENTATIVES*")) %>%
+  #in this next mutate statement we both rename the column and group the "other" parties into one category.
+        mutate(Party = case_when(choice_party %in% c("GRE","CST","LIB","UNA",NA) ~ "OTHER",
+                  TRUE ~ as.character(choice_party)
+                  )
+        ) %>%
+        group_by(Party) %>%
+        summarize(TotalVotes=sum(total_votes)) %>%
+        ggplot()+
+                geom_bar(
+                  mapping = 
+                    aes(
+                      x=reorder(Party, -TotalVotes),
+                      weight=TotalVotes,
+                      fill=Party)) +
+                  scale_y_continuous(labels=comma) +
+        labs( 
+                title="Total Votes Cast By Party, N.C. House Races 2018",
+                x="Party",
+                y="Votes for all candidates"
+                ) +
+
+        theme_fivethirtyeight() +
+        scale_fill_fivethirtyeight() 
+```
+
+We will learn how to match the colors to the correct column later.
