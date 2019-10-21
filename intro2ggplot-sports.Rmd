@@ -1,0 +1,466 @@
+---
+title: "Intro to ggplot"
+output:
+  html_document:
+    df_print: paged
+---
+
+Import the libraries
+
+```{r}
+library(tidyverse)
+```
+Read in the data
+```{r}
+tabula_ncaa_football_combined <- read_csv("570-Fall91-Sports - R/data/tabula-ncaa_football_combined.csv")
+
+```
+
+Chart the number of people who attended the games.
+
+```{r}
+ggplot( data=tabula_ncaa_football_combined ) + geom_col( mapping = aes(x=School, y=Attend) )
+```
+
+What is "geom_col" ?
+
+```{r}
+?geom_col
+```
+
+
+Well, this is giving us twice as many schools as I would expect. Why?
+
+Oh, let's just look at 2017 and not both years. We can add a filter() function to the right side of the data argument.
+
+```{r}
+ggplot( data=filter(tabula_ncaa_football_combined, Year==2017 ) ) + geom_col( mapping = aes(x=School, y=Attend) )
+```
+
+That's a little better, but maybe just the top 10?
+
+Find the 10 schools with the most attendance in 2018. (Note: top_n must go at the end.)
+
+First we have to make it ... 
+
+```{r}
+tabula_ncaa_football_combined %>% filter(Year==2018) %>% arrange(desc(Attend)) %>% select(School, Attend) %>% top_n(10) 
+```
+
+.... then, if we like it, save it to a data frame... 
+
+```{r}
+top10 <- tabula_ncaa_football_combined %>% filter(Year==2018) %>% arrange(desc(Attend)) %>% select(School, Attend) %>% top_n(10) 
+```
+
+Now graph this subset of all schools.
+
+```{r}
+ggplot( data=top10 ) + geom_col( mapping = aes(x=School, y=Attend) )
+```
+
+But if you want to put it in order, you need to use the reorder() function in the value you assign to the x-axis.
+
+```{r}
+ggplot( data=top10 ) + geom_col( mapping = aes(x=reorder(School,Attend), y=Attend) )
+```
+
+Least to most probably makes more sense to folks. So put a minus sign before the field you want to order by.
+
+```{r}
+ggplot( data=top10 ) + geom_col( mapping = aes(x=reorder(School,-Attend), y=Attend) )
+```
+
+
+That's enough now with looking att just the raw attendance. I wonder how much the number of games played affects the attendance.
+
+To look at how many teams played different numbers of games we can switch from the geom_col() function to the geom_bar().
+
+The geom_bar() function by default does a count of the number of rows in each category for whatever field you select. So let's look at the number of games (as a category, not an actual value), which in this dataset is the column called "G".
+
+```{r}
+ggplot( data=tabula_ncaa_football_combined ) + geom_bar( mapping = aes(x=G) )
+```
+
+How about just 2017?
+
+```{r}
+ggplot( data=filter(tabula_ncaa_football_combined, Year==2017 ) ) + geom_bar( mapping = aes(x=G) )
+```
+
+What about looking at what percentage of teams had each number of games? 
+
+You can explicitly turn the y axis of a bar chart into proportions using "y=..prop.." 
+
+(Why? Because I said so...)
+
+```{r}
+ggplot( data=filter(tabula_ncaa_football_combined, Year==2017 ) ) + geom_bar( mapping = aes(x=G, y=..prop..) )
+```
+
+
+So... is there REALLY a difference between geom_col() and geom_bar()? They look to me like they draw pretty much the same picture. 
+
+Well, let's try it.
+
+Remember this?
+```{r}
+# ggplot( data=top10 ) + geom_col( mapping = aes(x=School, y=Attend) )
+```
+
+What if we changed it to geom_bar() ? (... and dropped the y argument...)
+
+```{r}
+ggplot( data=top10 ) + geom_bar( mapping = aes(x=School) )
+```
+
+Well this is dumb. Just a histogram that tells us we have one value for each of our schools. We need to "weight" it... which means (in this case anyway) tell R the column you want to use as values. 
+
+```{r}
+ggplot( data=top10 ) + geom_bar( mapping = aes(x=School, weight = Attend) )
+```
+
+So... "weight=" is kinda like "y=" ... not sure why the world needs both, but whatever... 
+
+
+#This is probably the end of Oct. 21
+
+# Probably begin Oct. 23 here
+You know, going back to that chart we made of the distribution of the number of teams that played different numbers of games, I wonder which teams played the most games.
+
+Unfortunately, I don't remember what "the most number of games" was. Was it 7? 8? 22? No idea. 
+
+Luckily, I let the computer remember things like this for me. I can tell R to give me only the rows where the value of the "G" column is equal to the largest value in the "G" column. 
+
+
+
+```{r}
+ggplot( 
+        data=filter(
+                tabula_ncaa_football_combined, 
+                Year==2018, 
+                G==max(G)) ) + #here is the good stuff
+        geom_bar( 
+                mapping = 
+                        aes(
+                                x=reorder(School, -Attend),
+                                weight = Attend)
+                )
+```
+
+Now why do you supposed UCF and Hawaii hosted more games than anyone else?
+
+I wonder if those two schools ALWAYS host more games than anyone else.
+
+
+```{r}
+ggplot( 
+        data=filter(
+                tabula_ncaa_football_combined, 
+                Year==2017, #just change the value of this argument
+                G==max(G)) ) + 
+        geom_bar( 
+                mapping = 
+                        aes(
+                                x=reorder(School, -Attend),
+                                weight = Attend)
+                )
+```
+
+Hmmm... not the same at all. The Florida schools I understand, but Memphis?
+
+Could we put both years on the same graph? And maybe differentiate them by using different colors?
+
+Why, yes... yes we can.
+
+```{r}
+ggplot( 
+        data=filter(
+                tabula_ncaa_football_combined, # we dropped the year filter that had been here
+                G==max(G)) ) + 
+        geom_bar( 
+                mapping = 
+                        aes(
+                                x=reorder(School, -Attend),
+                                weight = Attend,
+                                fill = Year) #One little new line.
+                )
+```
+
+
+BUT WHY THE FUNKY LEGEND? 
+
+Because these "years" are really cateogrical values, not numerical values. So either change the column datatype in the dataframe. Or wrap the values here in factor() ... (or "as.character()") function.
+
+```{r}
+ggplot( data=filter(tabula_ncaa_football_combined, G==max(G)) ) +
+        geom_bar( mapping = aes(x=reorder(School, -Attend), weight = Attend, fill = factor(Year)) ) #here we wrap the Year column into the factor() function to (temporarily) change the datatype.
+```
+ 
+ Oh dear God! It looks like a gender neutral nursery.
+
+We can force R to change colors. What I'm showing you here is a very short-term solution specific to this case. But it gives you the idea... 
+```{r}
+ggplot( data=filter(tabula_ncaa_football_combined, G==max(G)) ) +
+        geom_bar( mapping = aes(x=reorder(School, -Attend), weight = Attend, fill = factor(Year)) ) + 
+        scale_fill_manual(values=c("red", "blue")) #In this case, the function goes outside and after the geom_bar() function.
+```
+
+
+One last bar thing before going to scatterplots. Stacked bars.
+
+```{r}
+
+ggplot( data= tabula_ncaa_football_combined ) +
+        geom_col( 
+                mapping = aes(
+                        x=reorder(School, -Attend),
+                        y=Attend, 
+                        fill = factor(Year) #instead of explictly setting colors, we can use another column (this time "Year") to determine the colors.
+                ) 
+        )
+        
+```
+
+But I don't want 2018 on the bottom.
+
+I have to "relevel" the "Year" factors.
+
+The relevel() function takes two arguments -- the data you are using, and then the "upper" level.
+
+```{r}
+
+ggplot( data= tabula_ncaa_football_combined ) +
+        geom_col( 
+                mapping = aes(
+                        x=reorder(School, -Attend),
+                        y=Attend, 
+                        fill = relevel(
+                                factor(Year),
+                                "2018")
+                )
+        )
+```
+
+If you want them side-by-side instead of stacked then you just add position = "dodge" to the aes() function
+
+```{r}
+
+ggplot( data= tabula_ncaa_football_combined ) +
+        geom_col( 
+                mapping = aes(
+                        x=reorder(School, -Attend),
+                        y=Attend, 
+                        fill = relevel(
+                                factor(Year), 
+                                "2018")
+                ),
+                position = "dodge" #new stuff right here.
+        )
+```
+
+We're going to leave the geom_col() and geom_bar() functions for a second to learn a new geom to build scatterplots (and,really, to illustrate some more aesthetic settings that aren't relevant to bar charts).
+
+Remember the very first bar chart we made?
+
+#ggplot( data=tabula_ncaa_football_combined ) + geom_col( mapping = aes(x=School, y=Attend) )
+
+What do you think is the one small change we would need to make to turn it in to a scatterplot?
+
+```{r}
+ggplot( data=tabula_ncaa_football_combined ) + geom_point( mapping = aes(x=School, y=Attend) )
+```
+
+That's a pretty dumb scatterplot.
+
+I wonder if we can make it less dumb if we add color.
+
+```{r}
+ggplot( data=tabula_ncaa_football_combined ) + 
+        geom_point( mapping = aes(x=School, 
+                                  y=Attend, 
+                                  color=factor(Year), #this lets the "Year" column control the color of the dots
+                                  )
+        )
+        
+```
+
+I fail to see a meaningful pattern. Let's continue our data exploration.
+
+We already see the School name and attendance. But what if we made the dots bigger based on the number of games the teams played.. 
+
+```{r}
+ggplot( data=tabula_ncaa_football_combined ) + 
+        geom_point( mapping = aes(x=School, 
+                                  y=Attend, 
+                                  color=factor(Year),
+                                  size = G #this lets the "G" column control the size of the dots.
+                                  )
+        )
+        
+```
+
+I can't think of any good reason to do this, but you can let a column control the opacity of the dots. 
+
+```{r}
+ggplot( data=tabula_ncaa_football_combined ) + 
+        geom_point( mapping = aes(x=School, 
+                                  y=Avg., 
+                                  color=factor(Year),
+                                  size = G,
+                                  alpha = Attend #The value of the "Attend" column controls the opacity of the dots.
+                                  )
+        )
+        
+```
+
+This is about to get seriously ugly, but in addition to color, size, and opacity (alpha) you can also pick a column that is used to control the shape of the dots.
+
+```{r}
+ggplot( data=tabula_ncaa_football_combined ) + 
+        geom_point( mapping = aes(x=School, 
+                                  y=Avg., 
+                                  color=School,
+                                  size = G,
+                                  alpha = Attend,
+                                  shape = factor(Year) #now the "Year" column is controlling the shape of the dots.
+                                  )
+        )
+        
+```
+
+Well... When we set the color argumen to "School" that gave us hundreds of colors that R wants to print in the legend. Let's get rid of that legend so we can see the shapes... 
+
+```{r}
+ggplot( data=tabula_ncaa_football_combined ) + 
+        geom_point( mapping = aes(x=School, 
+                                  y=Avg., 
+                                  color=School,
+                                  size = G,
+                                  alpha = Attend,
+                                  shape = factor(Year)
+                                  ),
+                            show.legend=FALSE) #this line gets rid of the legend.
+        
+```
+
+#Here is where Oct. 23 is likely to end.
+
+
+# We will probably begin Oct. 28 here. 
+Now we can fix our y axis labels. But we have to install the "scales" library first. Scales is just a package that helps make numbers pretty. https://www.tidyverse.org/articles/2018/08/scales-1-0-0/
+
+
+One of the things we can do is put commas into the numbers. (We can also do "$" and "%" but you can do that later by checking out the link above.)
+
+```{r}
+
+library(scales)
+
+ggplot(top10, 
+       aes(
+               x=reorder(School, -Attend), 
+               weight=Attend)) +
+        geom_bar() +
+        scale_y_continuous(labels=comma) #this is the new stuff.
+
+```
+
+Let's make the labels pretty.
+
+Here we will use the labs() function and three arguments to set the text for the "title" of the chart as welll as the labels for the x and y axes.
+
+```{r}
+ggplot(top10, 
+       aes(
+               x=reorder(School, -Attend), 
+               weight=Attend)
+       ) +
+        geom_bar() +
+        scale_y_continuous(labels=comma) +
+        labs( #this is the new stuff
+                title="Top 10 Football Programs By Attendance, 2018",
+                x="School",
+                y="Attendance"
+                )
+```
+
+
+ggplot() does allow you to fine tune a lot of elements of the chart, but not without some hassle. So folks have created "themes" that allow you to quickly make some common changes to the graphic.
+
+Let's do some cool themes. Some -- like "theme_light()" are built in... 
+```{r}
+ggplot(top10, 
+       aes(
+               x=reorder(School, -Attend), 
+               weight=Attend)
+       ) +
+        geom_bar() +
+        scale_y_continuous(labels=comma) +
+        labs( 
+                title="Top 10 Football Programs By Attendance, 2018",
+                x="School",
+                y="Attendance"
+                ) +
+        theme_light() #this is the new stuff
+```
+
+Or, we can add themes that other fine people have made... like fivethirtyeight
+
+http://www.ggplot2-exts.org/ggthemes.html
+
+https://github.com/rgknight/theme_fivethirtyeight
+
+
+
+```{r}
+
+install.packages("ggthemes")
+
+library("ggthemes")
+```
+
+
+```{r}
+ggplot(top10, 
+       aes(
+               x=reorder(School, -Attend), 
+               weight=Attend)
+       ) +
+        geom_bar() +
+        scale_y_continuous(labels=comma) +
+        labs( 
+                title="Top 10 Football Programs By Attendance, 2018",
+                x="School",
+                y="Attendance"
+                ) +
+        theme_light()  + 
+        theme_fivethirtyeight() #this is the new stuff
+
+```
+
+
+
+How about making horizontal bars instead of vertical? We "flip the cords"...
+
+```{r}
+ggplot(top10, 
+       aes(
+               x=reorder(School, -Attend), 
+               weight=Attend)
+       ) +
+        geom_bar() +
+        scale_y_continuous(labels=comma) +
+        labs( 
+                title="Top 10 Football Programs By Attendance, 2018",
+                x="School",
+                y="Attendance"
+                ) +
+        theme_light()  + 
+        theme_fivethirtyeight() + 
+        coord_flip() #this is the new stuff
+```
+
+
+
+
